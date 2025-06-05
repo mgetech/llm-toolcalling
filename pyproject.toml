@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "coding-challenge-screening"
+version = "0.2.0"
+description = ""
+authors = ["ellamind"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+datasets = "^2.20.0"
+huggingface-hub = "^0.24.5"
+ipykernel = "^6.29.5"
+openai = "^1.55.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
