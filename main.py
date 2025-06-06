@@ -3,44 +3,58 @@ import argparse
 
 import datasets
 from openai import OpenAI
-
-# NOTE: This is just a skeleton function. You should implement the actual tool calling logic here.
-# Feel free to change whatever you like; just the CLI and expected output format are important.
+import json
 
 
 def process_dataset(
     ds: datasets.Dataset, model: str, base_url: str, api_key: str
 ) -> datasets.Dataset:
     """Skeleton function for processing the dataset and adding the tool calls."""
-
     # Initialize the OpenAI client
     client = OpenAI(base_url=base_url, api_key=api_key)
 
     my_answers = []
-    # Call the Arcee-Agent Model you hosted to create the tool calls; you will have to call once for each row in the dataset
+    # Call the Arcee-Agent Model 
     for query, tools in zip(ds["query"], ds["tools"]):
         try:
-            # this should work if you set up the inference server correctly
+            prompt = f"""You have these tools:
+    {tools}
+
+    Now, for this user request:
+    {query}
+
+    Reply with a JSON _array_ of tool-call objects. Each object must have:
+      • "name": the tool’s name  
+      • "arguments": an object with only the parameters needed for that specific call  
+
+    If the request requires multiple calls (even to the same tool with different arguments), include one object per needed call.
+    Do not output unused parameters or any extra text.
+    """
             response = client.chat.completions.create(
                 messages=[
                     {
                         "role": "user",
-                        "content": f"Test for query: {query}",
+                        "content": prompt,
                     }
                 ],
                 model=model,
             )
-            answer = response.choices[0].message.content
-        except Exception as e:
-            # Only for testing purposes, there shouldn't be any errors if you set up the inference server and called the script correctly
-            print(f"Error calling the model: {e}")
-            answer = f"Error for query: {query}"
+            answer = response.choices[0].message.content.strip()
 
-        # REPLACE THIS WITH YOUR ACTUAL PARSING LOGIC
-        formatted_answer = answer
+            # Attempt to parse response as JSON
+            try:
+                parsed = json.loads(answer)
+                formatted_answer = json.dumps(parsed)
+            except Exception as parse_err:
+                print(f"[ParseError] Could not parse model response as JSON:\n{answer}")
+                formatted_answer = "[]"
+
+        except Exception as e:
+            print(f"[ModelError] Failed on query:\n{query}\nError: {e}")
+            formatted_answer = "[]"
+
         my_answers.append(formatted_answer)
 
-    # you should add the new column 'my_answers' with the expected tool calls to the dataset
     return ds.add_column("my_answers", my_answers)
 
 

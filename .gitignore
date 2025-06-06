@@ -174,3 +174,9 @@ user-data-dir/
 my_dataset/
 model/
 coding_challenge_screening*/
+
+# Symlinked or downloaded GGUF model files
+*.gguf
+# To ignore cache or copies
+*.arrow
+*.parquet
